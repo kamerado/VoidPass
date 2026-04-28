@@ -37,6 +37,7 @@ fun VaultListScreen(
     viewModel:    VaultListViewModel = viewModel(),
     onLock:       () -> Unit,
     onEntryClick: (PasswordEntry) -> Unit = {},
+    onSettings:   () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val entries = uiState.filteredEntries
@@ -49,6 +50,7 @@ fun VaultListScreen(
         topBar = {
             VaultTopBar(
                 onLock     = onLock,
+                onSettings = onSettings,      // add this
                 entryCount = uiState.entries.size,
             )
         },
@@ -151,6 +153,7 @@ fun VaultListScreen(
 @Composable
 private fun VaultTopBar(
     onLock:     () -> Unit,
+    onSettings: () -> Unit,
     entryCount: Int,
 ) {
     TopAppBar(
@@ -181,6 +184,13 @@ private fun VaultTopBar(
             }
         },
         actions = {
+            IconButton(onClick = onSettings) {     // ADD gear icon
+                Icon(
+                    Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = TextSecondary,
+                )
+            }
             IconButton(onClick = onLock) {
                 Icon(Icons.Default.Lock, contentDescription = "Lock vault", tint = TextSecondary)
             }

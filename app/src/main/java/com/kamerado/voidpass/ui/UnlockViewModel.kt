@@ -50,6 +50,9 @@ class UnlockViewModel(application: Application) : AndroidViewModel(application) 
     private var _vaultKey: ByteArray? = null
     val vaultKey: ByteArray? get() = _vaultKey
 
+    private var _justCreated = false
+    val justCreated: Boolean get() = _justCreated
+
     // ── Initialisation ────────────────────────────────────────────────────────
 
     fun init(biometricStatus: Int) {
@@ -106,6 +109,7 @@ class UnlockViewModel(application: Application) : AndroidViewModel(application) 
                 VaultDatabase.open(getApplication(), derivedKey)
 
                 _vaultKey = derivedKey
+                _justCreated = true
                 _uiState.update {
                     it.copy(
                         isLoading     = false,
@@ -271,4 +275,6 @@ class UnlockViewModel(application: Application) : AndroidViewModel(application) 
         _vaultKey?.fill(0)
         VaultDatabase.close()
     }
+
+    fun clearJustCreated() { _justCreated = false }
 }
