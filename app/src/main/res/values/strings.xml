@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">VoidPass</string>
+    <string name="autofill_service_name">VoidPass Autofill Service</string>
+</resources>
