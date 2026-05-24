@@ -2,6 +2,7 @@ package com.kamerado.voidpass.autofill
 
 import android.app.assist.AssistStructure
 import android.text.InputType
+import android.util.Log
 import android.view.View
 import android.view.autofill.AutofillId
 
@@ -31,6 +32,7 @@ object AutofillStructureParser {
                             View.AUTOFILL_HINT_USERNAME,
                             View.AUTOFILL_HINT_EMAIL_ADDRESS ->
                                 if (username == null) username = node.autofillId
+                            "current-password",
                             View.AUTOFILL_HINT_PASSWORD ->
                                 if (password == null) password = node.autofillId
                         }
@@ -49,6 +51,24 @@ object AutofillStructureParser {
     private fun walk(node: AssistStructure.ViewNode, visit: (AssistStructure.ViewNode) -> Unit) {
         visit(node)
         for (i in 0 until node.childCount) walk(node.getChildAt(i), visit)
+        // Dump everything — no filter
+        Log.d("VaultAutofill",
+            "Node: class=${node.className} " +
+                    "id=${node.idEntry} " +
+                    "hint='${node.hint}' " +
+                    "inputType=0x${node.inputType.toString(16)} " +
+                    "autofillHints=${node.autofillHints?.toList()} " +
+                    "autofillId=${node.autofillId} " +
+                    "htmlTag=${node.htmlInfo?.tag} " +
+                    "htmlType=${node.htmlInfo?.attributes
+                        ?.firstOrNull { it.first == "type" }?.second} " +
+                    "htmlAutocomplete=${node.htmlInfo?.attributes
+                        ?.firstOrNull { it.first == "autocomplete" }?.second} " +
+                    "webDomain=${node.webDomain} " +
+                    "childCount=${node.childCount}"
+        )
+
+
     }
 
     private fun looksLikeUsername(node: AssistStructure.ViewNode): Boolean {

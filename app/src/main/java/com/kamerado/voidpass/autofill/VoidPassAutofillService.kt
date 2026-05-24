@@ -18,6 +18,7 @@ class VaultAutofillService : AutofillService() {
         cancellationSignal: CancellationSignal,
         callback:           FillCallback,
     ) {
+        android.util.Log.d("VaultAutofill", "onFillRequest called")
         val structure = request.fillContexts.last().structure
         val parsed    = AutofillStructureParser.parse(structure)
 
@@ -51,14 +52,26 @@ class VaultAutofillService : AutofillService() {
                 setTextViewText(R.id.title, entry.title)
                 setTextViewText(R.id.subtitle, entry.username)
             }
-            val datasetBuilder = Dataset.Builder()
+            val dataset = Dataset.Builder()
+
             parsed.usernameId?.let {
-                datasetBuilder.setValue(it, AutofillValue.forText(entry.username), presentation)
+                val presentation = RemoteViews(packageName, R.layout.autofill_item).apply {
+                    setTextViewText(R.id.title, entry.title)
+                    setTextViewText(R.id.subtitle, entry.username)
+                }
+                dataset.setValue(it, AutofillValue.forText(entry.username), presentation)
             }
+
             parsed.passwordId?.let {
-                datasetBuilder.setValue(it, AutofillValue.forText(entry.password), presentation)
+                // Fresh RemoteViews instance — not the same object as above
+                val presentation = RemoteViews(packageName, R.layout.autofill_item).apply {
+                    setTextViewText(R.id.title, entry.title)
+                    setTextViewText(R.id.subtitle, entry.username)
+                }
+                dataset.setValue(it, AutofillValue.forText(entry.password), presentation)
             }
-            responseBuilder.addDataset(datasetBuilder.build())
+
+            responseBuilder.addDataset(dataset.build())
         }
 
         callback.onSuccess(responseBuilder.build())
