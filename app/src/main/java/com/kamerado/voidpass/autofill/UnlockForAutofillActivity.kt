@@ -84,6 +84,9 @@ class UnlockForAutofillActivity : FragmentActivity() {
         if (matches.isEmpty()) {
             // Unlocked successfully but no matching entries — tell the system
             // we have nothing to fill. It will dismiss the autofill UI.
+            // TODO: implement gen random password and save,
+            //  Also remember to save domain/appPackage as well.
+
             setResult(Activity.RESULT_CANCELED)
             finish()
             return

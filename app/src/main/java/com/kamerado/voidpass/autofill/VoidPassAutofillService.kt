@@ -24,6 +24,7 @@ class VaultAutofillService : AutofillService() {
 
         // Nothing autofillable on this screen — bail early.
         if (parsed.usernameId == null && parsed.passwordId == null) {
+
             callback.onSuccess(null)
             return
         }
@@ -32,49 +33,60 @@ class VaultAutofillService : AutofillService() {
 
         if (db == null) {
             // Vault is locked — return the "tap to unlock" placeholder.
+            android.util.Log.d("VaultAutoFill", "Asking user to unlock vault.")
             callback.onSuccess(buildAuthRequiredResponse(parsed))
             return
         }
-
-        // Vault is open — find matching entries and return them directly.
-        val target  = parsed.webDomain ?: parsed.appPackage ?: ""
-        val matches = db.findByDomainOrPackage(target, parsed.appPackage ?: "")
-
-        if (matches.isEmpty()) {
-            callback.onSuccess(null)
-            return
-        }
-
-        val responseBuilder = FillResponse.Builder()
-
-        for (entry in matches) {
-            val presentation = RemoteViews(packageName, R.layout.autofill_item).apply {
-                setTextViewText(R.id.title, entry.title)
-                setTextViewText(R.id.subtitle, entry.username)
-            }
-            val dataset = Dataset.Builder()
-
-            parsed.usernameId?.let {
-                val presentation = RemoteViews(packageName, R.layout.autofill_item).apply {
-                    setTextViewText(R.id.title, entry.title)
-                    setTextViewText(R.id.subtitle, entry.username)
-                }
-                dataset.setValue(it, AutofillValue.forText(entry.username), presentation)
-            }
-
-            parsed.passwordId?.let {
-                // Fresh RemoteViews instance — not the same object as above
-                val presentation = RemoteViews(packageName, R.layout.autofill_item).apply {
-                    setTextViewText(R.id.title, entry.title)
-                    setTextViewText(R.id.subtitle, entry.username)
-                }
-                dataset.setValue(it, AutofillValue.forText(entry.password), presentation)
-            }
-
-            responseBuilder.addDataset(dataset.build())
-        }
-
-        callback.onSuccess(responseBuilder.build())
+/*      TODO: This is dead code in the current implementation. Decide whether or not to keep the
+         current flow, or have the function above not return.
+         This might involve changing program flow inside of UnlockForAutoFillActivity
+ */
+//        android.util.Log.d("VaultAutoFill", "Finding matching entries...")
+//
+//        // Vault is open — find matching entries and return them directly.
+//        val target  = parsed.webDomain ?: parsed.appPackage ?: ""
+//        val matches = db.findByDomainOrPackage(target, parsed.appPackage ?: "")
+//
+//        android.util.Log.d("VaultAutoFill", "Matches: " + matches.toString())
+//
+//
+//        if (matches.isEmpty()) {
+//            // TODO: implement gen random password and save, Also remember to save domain/appPackage as well.
+//            android.util.Log.d("VaultAutoFill", "No entries found for this domain or appPackage, prompting auto generate and save.")
+//            callback.onSuccess(null)
+//            return
+//        }
+//
+//        val responseBuilder = FillResponse.Builder()
+//
+//        for (entry in matches) {
+//            val presentation = RemoteViews(packageName, R.layout.autofill_item).apply {
+//                setTextViewText(R.id.title, entry.title)
+//                setTextViewText(R.id.subtitle, entry.username)
+//            }
+//            val dataset = Dataset.Builder()
+//
+//            parsed.usernameId?.let {
+//                val presentation = RemoteViews(packageName, R.layout.autofill_item).apply {
+//                    setTextViewText(R.id.title, entry.title)
+//                    setTextViewText(R.id.subtitle, entry.username)
+//                }
+//                dataset.setValue(it, AutofillValue.forText(entry.username), presentation)
+//            }
+//
+//            parsed.passwordId?.let {
+//                // Fresh RemoteViews instance — not the same object as above
+//                val presentation = RemoteViews(packageName, R.layout.autofill_item).apply {
+//                    setTextViewText(R.id.title, entry.title)
+//                    setTextViewText(R.id.subtitle, entry.username)
+//                }
+//                dataset.setValue(it, AutofillValue.forText(entry.password), presentation)
+//            }
+//
+//            responseBuilder.addDataset(dataset.build())
+//        }
+//
+//        callback.onSuccess(responseBuilder.build())
     }
 
     override fun onSaveRequest(request: SaveRequest, callback: SaveCallback) {

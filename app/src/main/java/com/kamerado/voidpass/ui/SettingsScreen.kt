@@ -6,7 +6,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AttachEmail
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
@@ -122,6 +124,118 @@ fun SettingsScreen(
                     },
                     dismissButton = {
                         TextButton(onClick = { viewModel.onDisableBiometricCancelled() }) {
+                            Text("Cancel", color = TextSecondary)
+                        }
+                    },
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            SettingsSectionLabel("Defaults")
+
+            Spacer(Modifier.height(8.dp))
+
+            var showUsernameDialog by remember { mutableStateOf(false) }
+            var draftUsername by remember { mutableStateOf("") }
+            val defaultUsername by viewModel.defaultUsername.collectAsState()
+
+            SettingsRow(
+                icon     = Icons.Default.AccountCircle,
+                title    = "Default Username",
+                subtitle = defaultUsername.ifBlank { "Not set" },
+                onClick  = {
+                    draftUsername = defaultUsername  // pre-fill with current value
+                    showUsernameDialog = true
+                },
+            )
+
+            if (showUsernameDialog) {
+                AlertDialog(
+                    onDismissRequest = { showUsernameDialog = false },
+                    containerColor   = SurfaceElevated,
+                    title            = { Text("Default Username", color = TextPrimary) },
+                    text = {
+                        OutlinedTextField(
+                            value         = draftUsername,
+                            onValueChange = { draftUsername = it },
+                            singleLine    = true,
+                            label         = { Text("Username") },
+                            colors        = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = AccentBlue,
+                                unfocusedBorderColor = Color(0xFF2A3340),
+                                focusedTextColor   = TextPrimary,
+                                unfocusedTextColor = TextPrimary,
+                                focusedLabelColor  = AccentBlue,
+                                unfocusedLabelColor = TextSecondary,
+                                cursorColor        = AccentBlue,
+                            ),
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            viewModel.setDefaultUsername(draftUsername)
+                            showUsernameDialog = false
+                        }) {
+                            Text("SAVE", color = AccentBlue)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showUsernameDialog = false }) {
+                            Text("Cancel", color = TextSecondary)
+                        }
+                    },
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            var showEmailDialog by remember { mutableStateOf(false) }
+            var draftEmail by remember { mutableStateOf("") }
+            val defaultEmail by viewModel.defaultEmail.collectAsState()
+
+            SettingsRow(
+                icon     = Icons.Default.AttachEmail,
+                title    = "Default Email",
+                subtitle = defaultEmail.ifBlank { "Not set" },
+                onClick  = {
+                    draftEmail = defaultEmail  // pre-fill with current value
+                    showEmailDialog = true
+                },
+            )
+
+            if (showEmailDialog) {
+                AlertDialog(
+                    onDismissRequest = { showEmailDialog = false },
+                    containerColor   = SurfaceElevated,
+                    title            = { Text("Default Email", color = TextPrimary) },
+                    text = {
+                        OutlinedTextField(
+                            value         = draftEmail,
+                            onValueChange = { draftEmail = it },
+                            singleLine    = true,
+                            label         = { Text("Email") },
+                            colors        = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = AccentBlue,
+                                unfocusedBorderColor = Color(0xFF2A3340),
+                                focusedTextColor   = TextPrimary,
+                                unfocusedTextColor = TextPrimary,
+                                focusedLabelColor  = AccentBlue,
+                                unfocusedLabelColor = TextSecondary,
+                                cursorColor        = AccentBlue,
+                            ),
+                        )
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            viewModel.setDefaultEmail(draftEmail)
+                            showEmailDialog = false
+                        }) {
+                            Text("SAVE", color = AccentBlue)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showEmailDialog = false }) {
                             Text("Cancel", color = TextSecondary)
                         }
                     },
