@@ -62,6 +62,7 @@ class VaultDatabase private constructor(
     // ── Schema ────────────────────────────────────────────────────────────────
 
     override fun onCreate(db: SQLiteDatabase) {
+        // TODO: add email to schema- remember to add checks for this
         db.execSQL("""
             CREATE TABLE entries (
                 id          TEXT    PRIMARY KEY NOT NULL,

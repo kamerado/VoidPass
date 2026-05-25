@@ -29,6 +29,7 @@ object AutofillStructureParser {
                 if (hints != null) {
                     for (h in hints) {
                         when (h) {
+                            // TODO: change this logic to find email fields separately from username
                             View.AUTOFILL_HINT_USERNAME,
                             View.AUTOFILL_HINT_EMAIL_ADDRESS ->
                                 if (username == null) username = node.autofillId
@@ -71,6 +72,7 @@ object AutofillStructureParser {
 
     }
 
+    // TODO: email thing
     private fun looksLikeUsername(node: AssistStructure.ViewNode): Boolean {
         val id = node.idEntry?.lowercase() ?: ""
         val hint = node.hint?.lowercase() ?: ""

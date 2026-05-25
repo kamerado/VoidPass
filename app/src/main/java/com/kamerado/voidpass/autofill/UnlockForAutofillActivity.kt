@@ -48,13 +48,22 @@ class UnlockForAutofillActivity : FragmentActivity() {
         val passwordId = intent.getParcelableExtra<AutofillId>(EXTRA_PASSWORD_ID)
         val appPackage = intent.getStringExtra(EXTRA_APP_PACKAGE) ?: ""
         val webDomain  = intent.getStringExtra(EXTRA_WEB_DOMAIN) ?: ""
+        val saveUsername = intent.getStringExtra(EXTRA_SAVE_USERNAME)
+        val savePassword = intent.getStringExtra(EXTRA_SAVE_PASSWORD)
+
+
 
         // Watch for unlock — when it happens, query the DB and return results.
         lifecycleScope.launch {
             unlockViewModel.uiState.collectLatest { state ->
                 if (state.mode == UnlockMode.UNLOCKED) {
                     val vaultKey = unlockViewModel.vaultKey
-                    if (vaultKey != null) {
+                    // In the unlock success observer:
+                    if (saveUsername != null && savePassword != null && vaultKey != null) {
+                        // Save mode — just insert and finish, no fill response needed
+                        saveCredentials(vaultKey, saveUsername, savePassword, appPackage, webDomain)
+                    } else if (vaultKey != null) {
+                        // Fill mode — normal deliverCredentials flow
                         deliverCredentials(vaultKey, usernameId, passwordId, appPackage, webDomain)
                     } else {
                         setResult(Activity.RESULT_CANCELED)
@@ -74,6 +83,7 @@ class UnlockForAutofillActivity : FragmentActivity() {
         }
     }
 
+    // TODO: email
     private fun deliverCredentials(
         vaultKey:   ByteArray,
         usernameId: AutofillId?,
@@ -89,14 +99,9 @@ class UnlockForAutofillActivity : FragmentActivity() {
             db.findByDomainOrPackage(appPackage, appPackage)
 
         if (matches.isEmpty()) {
-            // Unlocked successfully but no matching entries — tell the system
-            // we have nothing to fill. It will dismiss the autofill UI.
-            // TODO: implement gen random password and save,
-            //  Also remember to save domain/appPackage as well.
-            //  1. Display generate new password prompt
-            //  2. either exit, RESULT_CANCELED and finish() activity, or generate new password
-            //  3. create new PasswordEntry object,
-            //  4. db.insert(entry) - insert new entry
+            // Unlocked successfully but no matching entries.
+            // Will prompt you if you would like to generate an entry.
+            // TODO: email
             showNoMatchDialog(
             vaultKey   = vaultKey,
                 usernameId = usernameId,
@@ -138,12 +143,37 @@ class UnlockForAutofillActivity : FragmentActivity() {
         finish()
     }
 
+    // TODO: email
+    private fun saveCredentials(
+        vaultKey:   ByteArray,
+        username:   String,
+        password:   String,
+        appPackage: String,
+        webDomain:  String,
+    ) {
+        val db = VaultDatabase.open(this, vaultKey)
+        db.insert(PasswordEntry(
+            title       = webDomain.ifBlank { appPackage },
+            username    = username,
+            password    = password,
+            url         = webDomain.ifBlank { null },
+            packageName = appPackage.ifBlank { null },
+        ))
+        // No fill response needed — just confirm success and exit
+        setResult(Activity.RESULT_OK)
+        finish()
+    }
+
     companion object {
         // Keys for the intent extras VaultAutofillService passes to this activity.
+        // TODO: add email - also change the db schema, and add checks for this
+
         const val EXTRA_USERNAME_ID  = "extra_username_id"
         const val EXTRA_PASSWORD_ID  = "extra_password_id"
         const val EXTRA_APP_PACKAGE  = "extra_app_package"
         const val EXTRA_WEB_DOMAIN   = "extra_web_domain"
+        const val EXTRA_SAVE_USERNAME = "extra_save_username"
+        const val EXTRA_SAVE_PASSWORD = "extra_save_password"
     }
 
     private fun generatePassword() {
@@ -174,6 +204,7 @@ class UnlockForAutofillActivity : FragmentActivity() {
             .show()
     }
 
+    // TODO: email
     private fun generateAndDeliver(
         vaultKey:   ByteArray,
         usernameId: AutofillId?,
