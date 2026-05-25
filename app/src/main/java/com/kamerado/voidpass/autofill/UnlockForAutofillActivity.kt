@@ -2,23 +2,30 @@ package com.kamerado.voidpass.autofill
 
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.service.autofill.Dataset
 import android.service.autofill.FillResponse
 import android.view.WindowManager
 import android.view.autofill.AutofillId
+import android.view.autofill.AutofillManager
 import android.view.autofill.AutofillValue
 import android.widget.RemoteViews
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import android.app.AlertDialog
+import android.content.SharedPreferences
 import androidx.fragment.app.FragmentActivity
 import com.kamerado.voidpass.db.VaultDatabase
 import com.kamerado.voidpass.ui.UnlockScreen
 import com.kamerado.voidpass.ui.UnlockMode
 import com.kamerado.voidpass.ui.UnlockViewModel
 import com.kamerado.voidpass.ui.theme.VaultTheme
+import com.kamerado.voidpass.crypto.PasswordGenerator
 import androidx.lifecycle.lifecycleScope
+import com.kamerado.voidpass.R
+import com.kamerado.voidpass.db.PasswordEntry
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -86,9 +93,17 @@ class UnlockForAutofillActivity : FragmentActivity() {
             // we have nothing to fill. It will dismiss the autofill UI.
             // TODO: implement gen random password and save,
             //  Also remember to save domain/appPackage as well.
-
-            setResult(Activity.RESULT_CANCELED)
-            finish()
+            //  1. Display generate new password prompt
+            //  2. either exit, RESULT_CANCELED and finish() activity, or generate new password
+            //  3. create new PasswordEntry object,
+            //  4. db.insert(entry) - insert new entry
+            showNoMatchDialog(
+            vaultKey   = vaultKey,
+                usernameId = usernameId,
+                passwordId = passwordId,
+                appPackage = appPackage,
+                webDomain  = webDomain,
+            )
             return
         }
 
@@ -129,5 +144,89 @@ class UnlockForAutofillActivity : FragmentActivity() {
         const val EXTRA_PASSWORD_ID  = "extra_password_id"
         const val EXTRA_APP_PACKAGE  = "extra_app_package"
         const val EXTRA_WEB_DOMAIN   = "extra_web_domain"
+    }
+
+    private fun generatePassword() {
+
+    }
+
+    private fun showNoMatchDialog(
+        vaultKey:   ByteArray,
+        usernameId: AutofillId?,
+        passwordId: AutofillId?,
+        appPackage: String,
+        webDomain:  String,
+    ) {
+        AlertDialog.Builder(this)
+            .setTitle("No credentials found")
+            .setMessage("No saved entry for ${webDomain.ifBlank { appPackage }}.\nGenerate and save one?")
+            .setPositiveButton("Generate & Save") { _, _ ->
+                generateAndDeliver(vaultKey, usernameId, passwordId, appPackage, webDomain)
+            }
+            .setNegativeButton("Cancel") { _, _ ->
+                setResult(Activity.RESULT_CANCELED)
+                finish()
+            }
+            .setOnCancelListener {
+                setResult(Activity.RESULT_CANCELED)
+                finish()
+            }
+            .show()
+    }
+
+    private fun generateAndDeliver(
+        vaultKey:   ByteArray,
+        usernameId: AutofillId?,
+        passwordId: AutofillId?,
+        appPackage: String,
+        webDomain:  String,
+    ) {
+        val prefs    = getSharedPreferences("vault_prefs", Context.MODE_PRIVATE)
+        val generator = PasswordGenerator(this)
+        val generated = generator.generate()
+
+        val defaultUsername = prefs.getString("default_username", "") ?: ""
+
+        val entry = PasswordEntry(
+            title = webDomain.ifBlank { appPackage },
+            username = defaultUsername,
+            password = generated,
+            url = webDomain.ifBlank { null },
+            packageName = appPackage.ifBlank { null },
+        )
+
+        val db = VaultDatabase.open(this, vaultKey)
+        db.insert(entry)
+
+        // Now deliver the newly created credentials back to the system
+        val responseBuilder = FillResponse.Builder()
+        val presentation = RemoteViews(packageName, R.layout.autofill_item).apply {
+            setTextViewText(R.id.title, entry.title)
+            setTextViewText(R.id.subtitle, entry.username)
+        }
+
+        val dataset = Dataset.Builder()
+        usernameId?.let {
+            val p = RemoteViews(packageName, R.layout.autofill_item).apply {
+                setTextViewText(R.id.title, entry.title)
+                setTextViewText(R.id.subtitle, entry.username)
+            }
+            dataset.setValue(it, AutofillValue.forText(entry.username), p)
+        }
+        passwordId?.let {
+            val p = RemoteViews(packageName, R.layout.autofill_item).apply {
+                setTextViewText(R.id.title, entry.title)
+                setTextViewText(R.id.subtitle, entry.username)
+            }
+            dataset.setValue(it, AutofillValue.forText(entry.password), p)
+        }
+
+        responseBuilder.addDataset(dataset.build())
+
+        val replyIntent = Intent().apply {
+            putExtra(AutofillManager.EXTRA_AUTHENTICATION_RESULT, responseBuilder.build())
+        }
+        setResult(Activity.RESULT_OK, replyIntent)
+        finish()
     }
 }

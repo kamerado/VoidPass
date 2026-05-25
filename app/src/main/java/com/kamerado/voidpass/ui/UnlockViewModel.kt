@@ -1,6 +1,7 @@
 package com.kamerado.voidpass.ui
 
 import android.app.Application
+import android.content.Context
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.kamerado.voidpass.crypto.CryptoManager
@@ -43,6 +44,9 @@ enum class UnlockMode {
 class UnlockViewModel(application: Application) : AndroidViewModel(application) {
 
     private val storage = VaultStorage(application)
+
+    private val prefs = getApplication<Application>()
+        .getSharedPreferences("vault_prefs", Context.MODE_PRIVATE)
 
     private val _uiState = MutableStateFlow(UnlockUiState())
     val uiState: StateFlow<UnlockUiState> = _uiState.asStateFlow()
