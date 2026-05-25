@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachEmail
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.GppBad
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -241,7 +242,80 @@ fun SettingsScreen(
                     },
                 )
             }
-        }
+
+            Spacer(Modifier.height(8.dp))
+
+            val passwordLength by viewModel.defaultPasswordLength.collectAsState()
+            var showLengthDialog by remember { mutableStateOf(false) }
+            var draftLength by remember { mutableStateOf(passwordLength.toFloat()) }
+
+            SettingsRow(
+                icon     = Icons.Default.GppBad,
+                title    = "Default Password Length",
+                subtitle = "$passwordLength characters",
+                onClick  = {
+                    draftLength = passwordLength.toFloat()
+                    showLengthDialog = true
+                },
+            )
+
+            if (showLengthDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLengthDialog = false },
+                    containerColor   = SurfaceElevated,
+                    title            = { Text("Password Length", color = TextPrimary) },
+                    text = {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            // Big number display
+                            Text(
+                                text  = draftLength.toInt().toString(),
+                                style = MaterialTheme.typography.displayLarge,
+                                color = AccentBlue,
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                text  = "characters",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = TextSecondary,
+                            )
+                            Spacer(Modifier.height(24.dp))
+                            Slider(
+                                value         = draftLength,
+                                onValueChange = { draftLength = it },
+                                valueRange    = 12f..50f,
+                                steps         = 37,
+                                colors        = SliderDefaults.colors(
+                                    thumbColor         = AccentBlue,
+                                    activeTrackColor   = AccentBlue,
+                                    inactiveTrackColor = Color(0xFF2A3340),
+                                ),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text("12", style = MaterialTheme.typography.labelSmall, color = TextDisabled)
+                                Text("50", style = MaterialTheme.typography.labelSmall, color = TextDisabled)
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            viewModel.setDefaultPasswordLength(draftLength.toInt())
+                            showLengthDialog = false
+                        }) {
+                            Text("SAVE", color = AccentBlue)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showLengthDialog = false }) {
+                            Text("Cancel", color = TextSecondary)
+                        }
+                    },
+                )
+            }
+        }   
     }
 }
 

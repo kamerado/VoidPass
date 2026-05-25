@@ -1,5 +1,6 @@
 package com.kamerado.voidpass.ui
 
+import android.R
 import android.app.Application
 import android.content.Context
 import androidx.lifecycle.AndroidViewModel
@@ -30,6 +31,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private val _defaultEmail = MutableStateFlow(getDefaultEmail())
     public val defaultEmail: StateFlow<String> = _defaultEmail.asStateFlow();
+
+    private val _defaultPasswordLength = MutableStateFlow(getDefaultPasswordLength())
+    public val defaultPasswordLength: StateFlow<Int> = _defaultPasswordLength.asStateFlow()
 
     private val storage = VaultStorage(application)
 
@@ -72,8 +76,16 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         _defaultEmail.update { email }
     }
 
+    fun setDefaultPasswordLength(len: Int) {
+        prefs.edit {
+            putInt("default_password_length", len)
+        }
+        _defaultPasswordLength.update { len }
+    }
+
     fun getDefaultUsername(): String = prefs.getString("default_username", "") ?: ""
 
     fun getDefaultEmail(): String    = prefs.getString("default_email", "") ?: ""
 
+    fun getDefaultPasswordLength(): Int = prefs.getInt("default_password_length", 12) ?: 12
 }
