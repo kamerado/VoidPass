@@ -45,10 +45,12 @@ class UnlockForAutofillActivity : FragmentActivity() {
         // Pull the autofill request data that VaultAutofillService packed
         // into the intent when it launched this activity.
         val usernameId = intent.getParcelableExtra<AutofillId>(EXTRA_USERNAME_ID)
+        val emailId    = intent.getParcelableExtra<AutofillId>(EXTRA_EMAIL_ID)
         val passwordId = intent.getParcelableExtra<AutofillId>(EXTRA_PASSWORD_ID)
         val appPackage = intent.getStringExtra(EXTRA_APP_PACKAGE) ?: ""
         val webDomain  = intent.getStringExtra(EXTRA_WEB_DOMAIN) ?: ""
         val saveUsername = intent.getStringExtra(EXTRA_SAVE_USERNAME)
+        val saveEmail    = intent.getStringExtra(EXTRA_SAVE_EMAIL)
         val savePassword = intent.getStringExtra(EXTRA_SAVE_PASSWORD)
 
 
@@ -59,12 +61,12 @@ class UnlockForAutofillActivity : FragmentActivity() {
                 if (state.mode == UnlockMode.UNLOCKED) {
                     val vaultKey = unlockViewModel.vaultKey
                     // In the unlock success observer:
-                    if (saveUsername != null && savePassword != null && vaultKey != null) {
+                    if (saveUsername != null && savePassword != null && saveEmail != null && vaultKey != null) {
                         // Save mode — just insert and finish, no fill response needed
-                        saveCredentials(vaultKey, saveUsername, savePassword, appPackage, webDomain)
+                        saveCredentials(vaultKey, saveUsername, saveEmail, savePassword, appPackage, webDomain)
                     } else if (vaultKey != null) {
                         // Fill mode — normal deliverCredentials flow
-                        deliverCredentials(vaultKey, usernameId, passwordId, appPackage, webDomain)
+                        deliverCredentials(vaultKey, usernameId, emailId, passwordId, appPackage, webDomain)
                     } else {
                         setResult(Activity.RESULT_CANCELED)
                         finish()
@@ -83,10 +85,10 @@ class UnlockForAutofillActivity : FragmentActivity() {
         }
     }
 
-    // TODO: email
     private fun deliverCredentials(
         vaultKey:   ByteArray,
         usernameId: AutofillId?,
+        emailId:    AutofillId?,
         passwordId: AutofillId?,
         appPackage: String,
         webDomain:  String,
@@ -101,10 +103,10 @@ class UnlockForAutofillActivity : FragmentActivity() {
         if (matches.isEmpty()) {
             // Unlocked successfully but no matching entries.
             // Will prompt you if you would like to generate an entry.
-            // TODO: email
             showNoMatchDialog(
             vaultKey   = vaultKey,
                 usernameId = usernameId,
+                emailId    = emailId,
                 passwordId = passwordId,
                 appPackage = appPackage,
                 webDomain  = webDomain,
@@ -143,10 +145,10 @@ class UnlockForAutofillActivity : FragmentActivity() {
         finish()
     }
 
-    // TODO: email
     private fun saveCredentials(
         vaultKey:   ByteArray,
         username:   String,
+        email:      String,
         password:   String,
         appPackage: String,
         webDomain:  String,
@@ -155,6 +157,7 @@ class UnlockForAutofillActivity : FragmentActivity() {
         db.insert(PasswordEntry(
             title       = webDomain.ifBlank { appPackage },
             username    = username,
+            email       = email,
             password    = password,
             url         = webDomain.ifBlank { null },
             packageName = appPackage.ifBlank { null },
@@ -166,13 +169,14 @@ class UnlockForAutofillActivity : FragmentActivity() {
 
     companion object {
         // Keys for the intent extras VaultAutofillService passes to this activity.
-        // TODO: add email - also change the db schema, and add checks for this
 
         const val EXTRA_USERNAME_ID  = "extra_username_id"
+        const val EXTRA_EMAIL_ID     = "extra_email_id"
         const val EXTRA_PASSWORD_ID  = "extra_password_id"
         const val EXTRA_APP_PACKAGE  = "extra_app_package"
         const val EXTRA_WEB_DOMAIN   = "extra_web_domain"
         const val EXTRA_SAVE_USERNAME = "extra_save_username"
+        const val EXTRA_SAVE_EMAIL    = "extra_save_email"
         const val EXTRA_SAVE_PASSWORD = "extra_save_password"
     }
 
@@ -183,6 +187,7 @@ class UnlockForAutofillActivity : FragmentActivity() {
     private fun showNoMatchDialog(
         vaultKey:   ByteArray,
         usernameId: AutofillId?,
+        emailId:    AutofillId?,
         passwordId: AutofillId?,
         appPackage: String,
         webDomain:  String,
@@ -191,7 +196,7 @@ class UnlockForAutofillActivity : FragmentActivity() {
             .setTitle("No credentials found")
             .setMessage("No saved entry for ${webDomain.ifBlank { appPackage }}.\nGenerate and save one?")
             .setPositiveButton("Generate & Save") { _, _ ->
-                generateAndDeliver(vaultKey, usernameId, passwordId, appPackage, webDomain)
+                generateAndDeliver(vaultKey, usernameId, emailId, passwordId, appPackage, webDomain)
             }
             .setNegativeButton("Cancel") { _, _ ->
                 setResult(Activity.RESULT_CANCELED)
@@ -204,10 +209,10 @@ class UnlockForAutofillActivity : FragmentActivity() {
             .show()
     }
 
-    // TODO: email
     private fun generateAndDeliver(
         vaultKey:   ByteArray,
         usernameId: AutofillId?,
+        emailId:    AutofillId?,
         passwordId: AutofillId?,
         appPackage: String,
         webDomain:  String,
@@ -217,10 +222,12 @@ class UnlockForAutofillActivity : FragmentActivity() {
         val generated = generator.generate()
 
         val defaultUsername = prefs.getString("default_username", "") ?: ""
+        val defaultEmail = prefs.getString("default_email", "") ?: ""
 
         val entry = PasswordEntry(
             title = webDomain.ifBlank { appPackage },
             username = defaultUsername,
+            email = defaultEmail,
             password = generated,
             url = webDomain.ifBlank { null },
             packageName = appPackage.ifBlank { null },
@@ -243,6 +250,13 @@ class UnlockForAutofillActivity : FragmentActivity() {
                 setTextViewText(R.id.subtitle, entry.username)
             }
             dataset.setValue(it, AutofillValue.forText(entry.username), p)
+        }
+        emailId?.let {
+            val p = RemoteViews(packageName, R.layout.autofill_item).apply {
+                setTextViewText(R.id.title, entry.title)
+                setTextViewText(R.id.subtitle, entry.username)
+            }
+            dataset.setValue(it, AutofillValue.forText(entry.email), p)
         }
         passwordId?.let {
             val p = RemoteViews(packageName, R.layout.autofill_item).apply {

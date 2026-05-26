@@ -65,6 +65,7 @@ class VaultListViewModel : ViewModel() {
     fun addEntry(
         title: String,
         username: String,
+        email: String,
         password: String,
         url: String? = null,
         notes: String? = null,
@@ -75,6 +76,7 @@ class VaultListViewModel : ViewModel() {
                 val entry = PasswordEntry(
                     title    = title,
                     username = username,
+                    email = email,
                     password = password,
                     url      = url,
                     notes    = notes,

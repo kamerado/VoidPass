@@ -14,7 +14,7 @@ data class PasswordEntry(
     val id:          String = UUID.randomUUID().toString(),
     val title:       String,
     val username:    String,
-    val email:       String?  = null,
+    val email:       String,
     val password:    String,
     val url:         String?  = null,
     val packageName: String?  = null,

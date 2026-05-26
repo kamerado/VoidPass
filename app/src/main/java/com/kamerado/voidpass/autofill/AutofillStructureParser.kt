@@ -8,6 +8,7 @@ import android.view.autofill.AutofillId
 
 data class ParsedStructure(
     val usernameId: AutofillId? = null,
+    val emailId: AutofillId? = null,
     val passwordId: AutofillId? = null,
     val appPackage: String? = null,
     val webDomain: String? = null,
@@ -16,6 +17,7 @@ data class ParsedStructure(
 object AutofillStructureParser {
     fun parse(structure: AssistStructure): ParsedStructure {
         var username: AutofillId? = null
+        var email:    AutofillId? = null
         var password: AutofillId? = null
         var webDomain: String? = null
         val appPackage = structure.activityComponent?.packageName
@@ -26,19 +28,25 @@ object AutofillStructureParser {
                 if (node.webDomain != null) webDomain = node.webDomain
 
                 val hints = node.autofillHints
+                val htmlType = node.htmlInfo
+                Log.d("AutoFillStructureParser", "html = " + htmlType.toString())
                 if (hints != null) {
                     for (h in hints) {
                         when (h) {
                             // TODO: change this logic to find email fields separately from username
-                            View.AUTOFILL_HINT_USERNAME,
-                            View.AUTOFILL_HINT_EMAIL_ADDRESS ->
+                            //  TEST THIS NOW!
+                            View.AUTOFILL_HINT_USERNAME ->
                                 if (username == null) username = node.autofillId
+                            View.AUTOFILL_HINT_EMAIL_ADDRESS ->
+                                if (email == null) email = node.autofillId
                             "current-password",
+                            "new-password",
                             View.AUTOFILL_HINT_PASSWORD ->
                                 if (password == null) password = node.autofillId
                         }
                     }
                 } else {
+                    // TODO: check email as well.
                     // Heuristic fallbacks for apps that don't set hints.
                     val isPassword = (node.inputType and InputType.TYPE_TEXT_VARIATION_PASSWORD) != 0
                     if (isPassword && password == null) password = node.autofillId
@@ -46,7 +54,7 @@ object AutofillStructureParser {
                 }
             }
         }
-        return ParsedStructure(username, password, appPackage, webDomain)
+        return ParsedStructure(username, email, password, appPackage, webDomain)
     }
 
     private fun walk(node: AssistStructure.ViewNode, visit: (AssistStructure.ViewNode) -> Unit) {
@@ -72,7 +80,7 @@ object AutofillStructureParser {
 
     }
 
-    // TODO: email thing
+    // TODO: email version of this
     private fun looksLikeUsername(node: AssistStructure.ViewNode): Boolean {
         val id = node.idEntry?.lowercase() ?: ""
         val hint = node.hint?.lowercase() ?: ""

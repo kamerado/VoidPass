@@ -44,15 +44,18 @@ class VaultAutofillService : AutofillService() {
         val parsed    = AutofillStructureParser.parse(structure)
 
         val username = findValueForId(structure, parsed.usernameId)
+        val email = findValueForId(structure, parsed.emailId)
         val password = findValueForId(structure, parsed.passwordId)
 
         if (username != null && password != null) {
             val intent = Intent(this, UnlockForAutofillActivity::class.java).apply {
                 putExtra(UnlockForAutofillActivity.EXTRA_USERNAME_ID,  parsed.usernameId)
+                putExtra(UnlockForAutofillActivity.EXTRA_EMAIL_ID, parsed.emailId)
                 putExtra(UnlockForAutofillActivity.EXTRA_PASSWORD_ID,  parsed.passwordId)
                 putExtra(UnlockForAutofillActivity.EXTRA_APP_PACKAGE,  parsed.appPackage)
                 putExtra(UnlockForAutofillActivity.EXTRA_WEB_DOMAIN,   parsed.webDomain)
                 putExtra(UnlockForAutofillActivity.EXTRA_SAVE_USERNAME, username)
+                putExtra(UnlockForAutofillActivity.EXTRA_SAVE_EMAIL, email)
                 putExtra(UnlockForAutofillActivity.EXTRA_SAVE_PASSWORD, password)
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }

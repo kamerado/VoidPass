@@ -116,8 +116,8 @@ fun VaultListScreen(
         if (showAddDialog) {
             AddEntryDialog(
                 onDismiss = { showAddDialog = false },
-                onSave    = { title, username, password, url, notes ->
-                    viewModel.addEntry(title, username, password, url, notes)
+                onSave    = { title, username, email, password, url, notes ->
+                    viewModel.addEntry(title, username, email, password, url, notes)
                     showAddDialog = false
                 },
             )
@@ -363,10 +363,11 @@ private fun EntryCard(
 @Composable
 private fun AddEntryDialog(
     onDismiss: () -> Unit,
-    onSave:    (title: String, username: String, password: String, url: String?, notes: String?) -> Unit,
+    onSave:    (title: String, username: String, email: String, password: String, url: String?, notes: String?) -> Unit,
 ) {
     var title    by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
+    var email by    remember { mutableStateOf("")}
     var password by remember { mutableStateOf("") }
     var url      by remember { mutableStateOf("") }
     var notes    by remember { mutableStateOf("") }
@@ -381,6 +382,8 @@ private fun AddEntryDialog(
                 DialogField("Title *",       title,    { title = it })
                 Spacer(Modifier.height(8.dp))
                 DialogField("Username *",    username, { username = it })
+                Spacer(Modifier.height(8.dp))
+                DialogField("Email", email, { email = it })
                 Spacer(Modifier.height(8.dp))
                 DialogField(
                     label    = "Password *",
@@ -398,11 +401,12 @@ private fun AddEntryDialog(
         },
         confirmButton = {
             TextButton(
-                enabled = title.isNotBlank() && username.isNotBlank() && password.isNotBlank(),
+                enabled = title.isNotBlank() && username.isNotBlank() && email.isNotBlank() && password.isNotBlank(),
                 onClick = {
                     onSave(
                         title.trim(),
                         username.trim(),
+                        email.trim(),
                         password,
                         url.trim().ifBlank { null },
                         notes.trim().ifBlank { null },

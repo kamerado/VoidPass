@@ -51,6 +51,7 @@ data class EntryDetailUiState(
     // Editable field values
     val editTitle:       String         = "",
     val editUsername:    String         = "",
+    val editEmail:       String         = "",
     val editPassword:    String         = "",
     val editUrl:         String         = "",
     val editNotes:       String         = "",
@@ -70,6 +71,7 @@ class EntryDetailViewModel : ViewModel() {
                 entry        = entry,
                 editTitle    = entry.title,
                 editUsername = entry.username,
+                editEmail    = entry.email,
                 editPassword = entry.password,
                 editUrl      = entry.url ?: "",
                 editNotes    = entry.notes ?: "",
@@ -88,6 +90,7 @@ class EntryDetailViewModel : ViewModel() {
                 isEditing    = false,
                 editTitle    = entry.title,
                 editUsername = entry.username,
+                editEmail    = entry.email,
                 editPassword = entry.password,
                 editUrl      = entry.url ?: "",
                 editNotes    = entry.notes ?: "",
@@ -101,6 +104,7 @@ class EntryDetailViewModel : ViewModel() {
             when (field) {
                 EntryField.TITLE    -> it.copy(editTitle    = value, errorMessage = null)
                 EntryField.USERNAME -> it.copy(editUsername = value, errorMessage = null)
+                EntryField.EMAIL    -> it.copy(editEmail = value, errorMessage = null)
                 EntryField.PASSWORD -> it.copy(editPassword = value, errorMessage = null)
                 EntryField.URL      -> it.copy(editUrl      = value, errorMessage = null)
                 EntryField.NOTES    -> it.copy(editNotes    = value, errorMessage = null)
@@ -135,6 +139,7 @@ class EntryDetailViewModel : ViewModel() {
                 val updated = original.copy(
                     title       = state.editTitle.trim(),
                     username    = state.editUsername.trim(),
+                    email       = state.editEmail.trim(),
                     password    = state.editPassword,
                     url         = state.editUrl.trim().ifBlank { null },
                     notes       = state.editNotes.trim().ifBlank { null },
@@ -171,4 +176,4 @@ class EntryDetailViewModel : ViewModel() {
     }
 }
 
-enum class EntryField { TITLE, USERNAME, PASSWORD, URL, NOTES }
+enum class EntryField { TITLE, USERNAME, EMAIL, PASSWORD, URL, NOTES }

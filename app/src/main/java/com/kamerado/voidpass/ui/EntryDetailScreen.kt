@@ -144,6 +144,7 @@ fun EntryDetailScreen(
                 // ── Edit mode ──────────────────────────────────────────────
                 DetailField("Title",    uiState.editTitle,    EntryField.TITLE,    viewModel)
                 DetailField("Username", uiState.editUsername, EntryField.USERNAME, viewModel)
+                DetailField("Email", uiState.editEmail, EntryField.EMAIL, viewModel)
                 PasswordEditField(uiState, viewModel)
                 DetailField("URL",      uiState.editUrl,      EntryField.URL,      viewModel)
                 DetailField("Notes",    uiState.editNotes,    EntryField.NOTES,    viewModel,
@@ -153,6 +154,8 @@ fun EntryDetailScreen(
                 uiState.entry?.let { e ->
                     ViewRow(label = "Title",    value = e.title)
                     ViewRow(label = "Username", value = e.username,
+                        copyable = true, context = context)
+                    ViewRow(label = "Email", value = e.email,
                         copyable = true, context = context)
                     PasswordViewRow(
                         password       = e.password,
