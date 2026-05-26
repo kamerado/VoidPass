@@ -23,7 +23,7 @@ class VaultAutofillService : AutofillService() {
         val parsed    = AutofillStructureParser.parse(structure)
 
         // Nothing autofillable on this screen — bail early.
-        if (parsed.usernameId == null && parsed.passwordId == null) {
+        if (parsed.usernameId == null && parsed.passwordId == null && parsed.emailId == null) {
 
             callback.onSuccess(null)
             return
@@ -47,7 +47,7 @@ class VaultAutofillService : AutofillService() {
         val email = findValueForId(structure, parsed.emailId)
         val password = findValueForId(structure, parsed.passwordId)
 
-        if (username != null && password != null) {
+        if (username != null && password != null && email != null) {
             val intent = Intent(this, UnlockForAutofillActivity::class.java).apply {
                 putExtra(UnlockForAutofillActivity.EXTRA_USERNAME_ID,  parsed.usernameId)
                 putExtra(UnlockForAutofillActivity.EXTRA_EMAIL_ID, parsed.emailId)
@@ -69,6 +69,7 @@ class VaultAutofillService : AutofillService() {
         // Build the Intent that launches the unlock activity.
         val authIntent = Intent(this, UnlockForAutofillActivity::class.java).apply {
             putExtra(UnlockForAutofillActivity.EXTRA_USERNAME_ID, parsed.usernameId)
+            putExtra(UnlockForAutofillActivity.EXTRA_EMAIL_ID, parsed.emailId)
             putExtra(UnlockForAutofillActivity.EXTRA_PASSWORD_ID, parsed.passwordId)
             putExtra(UnlockForAutofillActivity.EXTRA_APP_PACKAGE, parsed.appPackage)
             putExtra(UnlockForAutofillActivity.EXTRA_WEB_DOMAIN,  parsed.webDomain)
@@ -87,7 +88,7 @@ class VaultAutofillService : AutofillService() {
 
         return FillResponse.Builder()
             .setAuthentication(
-                listOfNotNull(parsed.usernameId, parsed.passwordId).toTypedArray(),
+                listOfNotNull(parsed.usernameId, parsed.emailId, parsed.passwordId).toTypedArray(),
                 pi.intentSender,
                 presentation,
             )

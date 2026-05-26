@@ -26,14 +26,26 @@ object AutofillStructureParser {
             val root = structure.getWindowNodeAt(i).rootViewNode
             walk(root) { node ->
                 if (node.webDomain != null) webDomain = node.webDomain
+                // Extract all signals into named variables first
+                val className      = node.className
+                val idEntry        = node.idEntry
+                val hint           = node.hint
+                val inputType      = node.inputType
+//                val autofillHints  = node.autofillHints
+                val autofillId     = node.autofillId
+                val htmlTag        = node.htmlInfo?.tag
+                val htmlType       = node.htmlInfo?.attributes?.firstOrNull { it.first == "type" }?.second
+                val htmlAutocomplete = node.htmlInfo?.attributes?.firstOrNull { it.first == "autocomplete" }?.second
+                val webDomain      = node.webDomain
+                val childCount     = node.childCount
 
                 val hints = node.autofillHints
-                val htmlType = node.htmlInfo
-                Log.d("AutoFillStructureParser", "html = " + htmlType.toString())
+//                Log.d("AutoFillStructureParser", "html = " + htmlType.toString())
                 if (hints != null) {
                     for (h in hints) {
                         when (h) {
                             // TODO: change this logic to find email fields separately from username
+                            //  DONE  ^^
                             //  TEST THIS NOW!
                             View.AUTOFILL_HINT_USERNAME ->
                                 if (username == null) username = node.autofillId
@@ -45,8 +57,17 @@ object AutofillStructureParser {
                                 if (password == null) password = node.autofillId
                         }
                     }
+                    Log.d("VaultAutoFill", "Parsing htmlType is: " + htmlType)
+                    if (username == null && htmlType == "select-one") username = node.autofillId
+                    if (email == null && htmlType == "email") {
+                        Log.d("VaultAutoFill", "EMAIL HITTTT htmlType is: " + htmlType)
+                        email = node.autofillId
+                    }
+                    if (password == null && htmlType == "password") password = node.autofillId
                 } else {
                     // TODO: check email as well.
+                    //  This may never be called because hints could be an empty list.
+                    //  Test at some point
                     // Heuristic fallbacks for apps that don't set hints.
                     val isPassword = (node.inputType and InputType.TYPE_TEXT_VARIATION_PASSWORD) != 0
                     if (isPassword && password == null) password = node.autofillId
@@ -60,7 +81,7 @@ object AutofillStructureParser {
     private fun walk(node: AssistStructure.ViewNode, visit: (AssistStructure.ViewNode) -> Unit) {
         visit(node)
         for (i in 0 until node.childCount) walk(node.getChildAt(i), visit)
-        // Dump everything — no filter
+        // Dump everything — we need anything possible to identify fields
         Log.d("VaultAutofill",
             "Node: class=${node.className} " +
                     "id=${node.idEntry} " +
@@ -76,11 +97,9 @@ object AutofillStructureParser {
                     "webDomain=${node.webDomain} " +
                     "childCount=${node.childCount}"
         )
-
-
     }
 
-    // TODO: email version of this
+    // TODO: email version of this maybe
     private fun looksLikeUsername(node: AssistStructure.ViewNode): Boolean {
         val id = node.idEntry?.lowercase() ?: ""
         val hint = node.hint?.lowercase() ?: ""

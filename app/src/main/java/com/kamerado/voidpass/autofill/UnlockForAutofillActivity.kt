@@ -96,9 +96,9 @@ class UnlockForAutofillActivity : FragmentActivity() {
         // Query the now-unlocked vault for matching entries.
         val db      = VaultDatabase.open(this, vaultKey)
         val matches = if (webDomain.isNotBlank())
-            db.findByDomainOrPackage(webDomain, appPackage)
+            db.findByWebDomain(webDomain)
         else
-            db.findByDomainOrPackage(appPackage, appPackage)
+            db.findByPackageName(appPackage)
 
         if (matches.isEmpty()) {
             // Unlocked successfully but no matching entries.
@@ -160,7 +160,7 @@ class UnlockForAutofillActivity : FragmentActivity() {
             email       = email,
             password    = password,
             url         = webDomain.ifBlank { null },
-            packageName = appPackage.ifBlank { null },
+            packageName = if (webDomain.isNotBlank()) null else appPackage,
         ))
         // No fill response needed — just confirm success and exit
         setResult(Activity.RESULT_OK)
@@ -225,12 +225,12 @@ class UnlockForAutofillActivity : FragmentActivity() {
         val defaultEmail = prefs.getString("default_email", "") ?: ""
 
         val entry = PasswordEntry(
-            title = webDomain.ifBlank { appPackage },
-            username = defaultUsername,
-            email = defaultEmail,
-            password = generated,
-            url = webDomain.ifBlank { null },
-            packageName = appPackage.ifBlank { null },
+            title       = webDomain.ifBlank { appPackage },
+            username    = defaultUsername,
+            email       = defaultEmail,
+            password    = generated,
+            url         = webDomain.ifBlank { null },
+            packageName = if (webDomain.isNotBlank()) null else appPackage,
         )
 
         val db = VaultDatabase.open(this, vaultKey)

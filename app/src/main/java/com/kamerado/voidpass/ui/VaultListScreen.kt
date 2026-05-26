@@ -367,7 +367,7 @@ private fun AddEntryDialog(
 ) {
     var title    by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
-    var email by    remember { mutableStateOf("")}
+    var email by    remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var url      by remember { mutableStateOf("") }
     var notes    by remember { mutableStateOf("") }

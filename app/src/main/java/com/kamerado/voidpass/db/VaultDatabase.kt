@@ -111,6 +111,22 @@ class VaultDatabase private constructor(
         return cursor.use { it.toEntryList() }
     }
 
+    fun findByWebDomain(domain: String): List<PasswordEntry> {
+        val cursor = readableDatabase.rawQuery(
+            "SELECT * FROM entries WHERE url LIKE ?",
+            arrayOf("%$domain%")
+        )
+        return cursor.use { it.toEntryList() }
+    }
+
+    fun findByPackageName(packageName: String): List<PasswordEntry> {
+        val cursor = readableDatabase.rawQuery(
+            "SELECT * FROM entries WHERE packageName = ?",
+            arrayOf(packageName)
+        )
+        return cursor.use { it.toEntryList() }
+    }
+
     fun insert(entry: PasswordEntry) {
         val db = writableDatabase
         db.execSQL(
