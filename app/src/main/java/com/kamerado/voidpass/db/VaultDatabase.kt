@@ -14,6 +14,7 @@ data class PasswordEntry(
     val id:          String = UUID.randomUUID().toString(),
     val title:       String,
     val username:    String,
+    val email:       String?  = null,
     val password:    String,
     val url:         String?  = null,
     val packageName: String?  = null,
@@ -62,12 +63,12 @@ class VaultDatabase private constructor(
     // ── Schema ────────────────────────────────────────────────────────────────
 
     override fun onCreate(db: SQLiteDatabase) {
-        // TODO: add email to schema- remember to add checks for this
         db.execSQL("""
             CREATE TABLE entries (
                 id          TEXT    PRIMARY KEY NOT NULL,
                 title       TEXT    NOT NULL,
                 username    TEXT    NOT NULL,
+                email       TEXT    NOT NULL,
                 password    TEXT    NOT NULL,
                 url         TEXT,
                 packageName TEXT,
@@ -114,10 +115,10 @@ class VaultDatabase private constructor(
         val db = writableDatabase
         db.execSQL(
             """INSERT INTO entries
-           (id, title, username, password, url, packageName, notes, createdAt, updatedAt)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+           (id, title, username, email, password, url, packageName, notes, createdAt, updatedAt)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             arrayOf<Any?>(    // ← add <Any?>
-                entry.id, entry.title, entry.username, entry.password,
+                entry.id, entry.title, entry.username, entry.email, entry.password,
                 entry.url, entry.packageName, entry.notes,
                 entry.createdAt, entry.updatedAt,
             )
@@ -128,11 +129,11 @@ class VaultDatabase private constructor(
         val db = writableDatabase
         db.execSQL(
             """UPDATE entries SET
-           title = ?, username = ?, password = ?, url = ?,
+           title = ?, username = ?, email = ?, password = ?, url = ?,
            packageName = ?, notes = ?, updatedAt = ?
            WHERE id = ?""",
             arrayOf<Any?>(    // ← add <Any?>
-                entry.title, entry.username, entry.password, entry.url,
+                entry.title, entry.username, entry.email, entry.password, entry.url,
                 entry.packageName, entry.notes,
                 System.currentTimeMillis(),
                 entry.id,
@@ -150,6 +151,7 @@ class VaultDatabase private constructor(
         id          = getString(getColumnIndexOrThrow("id")),
         title       = getString(getColumnIndexOrThrow("title")),
         username    = getString(getColumnIndexOrThrow("username")),
+        email       = getString(getColumnIndexOrThrow("email")),
         password    = getString(getColumnIndexOrThrow("password")),
         url         = getString(getColumnIndexOrThrow("url")),
         packageName = getString(getColumnIndexOrThrow("packageName")),
